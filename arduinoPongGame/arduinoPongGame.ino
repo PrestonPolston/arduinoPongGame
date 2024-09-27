@@ -1,81 +1,71 @@
 #include "Arduino_LED_Matrix.h"
 ArduinoLEDMatrix matrix;
-byte frame[8][12];
-int lifeCount = 3;
-int lifeOne = 11;
-int lifeTwo = 10;
-int lifeThree = 9;
+int br=115200;
+int pongPixelTimer = 150;
+int xPos=3;
+int yPos=2;
+int deltaX=1;
+int deltaY=1;
+
 int upButton = 2;
+int upValue;
 int downButton = 4;
-int br = 115200;
-int delayTime = 250;
-int movementDelay = 75;
-int moveUp;
-int moveDown;
-int pongPosition;
-int pongX = 0;
-int pongY = 0;
-int xPos = 3;
-int yPos = 2;
-int deltaX = 1;
-int deltaY = 1;
+int downValue;
+int playerPixel;
+int playerPixelTimer = 50;
+int playerRow = 4;
+int step = 1;
+int cnt = 0;
+
 int i;
 int j;
 
+byte frame[8][12];
+
 void setup() {
-  pinMode(lifeOne, OUTPUT);
-  pinMode(lifeTwo, OUTPUT);
-  pinMode(lifeThree, OUTPUT);
-  pinMode(upButton, INPUT);
-  pinMode(downButton, INPUT);
-  Serial.begin(br);
-  matrix.begin();
+pinMode(upButton, INPUT);
+pinMode(downButton, INPUT);
+Serial.begin(br);
+matrix.begin();
 }
-
 void loop() {
-digitalWrite(lifeOne, HIGH);
-digitalWrite(lifeTwo, HIGH);
-digitalWrite(lifeThree, HIGH);
+upValue = digitalRead(upButton);
+downValue = digitalRead(downButton);
 
-memset(frame, 0, sizeof(frame)); 
-
-frame[pongX][pongY] = 1;
-
-matrix.renderBitmap(frame, 8, 12);
-
-if (digitalRead(upButton) == HIGH){
-  if (pongX > 0) { 
-    pongX--;
-    delay(delayTime);
-    Serial.println("moving up");
-  }
+if(upValue == 0 ){
+  playerRow = playerRow + step;
 }
-  
-if (digitalRead(downButton) == HIGH){
-  if (pongX < 7) { 
-    pongX++;
-    delay(delayTime);
-    Serial.println("moving down");
-  }
+if(downValue == 0){
+  playerRow = playerRow - step;
 }
 
-  for(i = 0; i < 8; i= i + 1) {
-    for(j = 0; j < 12; j = j + 1) {
-      frame[i][j] = 0;
-      if(i == xPos && j == yPos){
-        frame[i][j] = 1;
-      }
+if(cnt % 2 == 0){
+
+for ( i = 0; i <= 11; i = i + 1){
+  for (j = 0; j <= 7; j = j + 1){
+    frame[j][i] = 0;
+    if (i == xPos && j == yPos){
+      frame[j][i] = 1;
+    }
+    if(i == 0 && j == playerRow){
+      frame[j][i] = 1;
     }
   }
-
-  if(xPos >= 7 || xPos <= 0){
-    deltaX = -deltaX;
-  }
-  if(yPos >= 11 || yPos <= 0){
-    deltaY = -deltaY;
-  }
+}
 matrix.renderBitmap(frame, 8, 12);
-  xPos += deltaX;
-  yPos += deltaY;
-  delay(movementDelay);
+if (xPos >= 11 || xPos <= 0){
+  deltaX = -deltaX;
+}
+if (yPos >= 7 || yPos <= 0){
+  deltaY = -deltaY;
+}
+if (xPos == 0 && yPos != playerRow){
+  Serial.println("Game Over!");
+  delay(5000);
+}
+xPos = xPos + deltaX;
+yPos = yPos + deltaY;
+}
+cnt = cnt + 1;
+delay(pongPixelTimer);
 }
